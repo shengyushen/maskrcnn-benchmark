@@ -30,7 +30,10 @@ def build_dataset(dataset_list, transforms, dataset_catalog, is_train=True):
             "dataset_list should be a list of strings, got {}".format(dataset_list)
         )
     datasets = []
+    total_datasets_size = 0
     for dataset_name in dataset_list:
+        # SSY
+        #print("dataset_name "+str(dataset_name))
         data = dataset_catalog.get(dataset_name)
         factory = getattr(D, data["factory"])
         args = data["args"]
@@ -41,20 +44,25 @@ def build_dataset(dataset_list, transforms, dataset_catalog, is_train=True):
         if data["factory"] == "PascalVOCDataset":
             args["use_difficult"] = not is_train
         args["transforms"] = transforms
+        # SSY
+        #print("args "+str(args))
         # make dataset from factory
         dataset = factory(**args)
+        # SSY
+        #print("dataset1 "+str(dataset))
+        total_datasets_size += len(dataset)
         datasets.append(dataset)
 
     # for testing, return a list of datasets
     if not is_train:
-        return datasets
+        return datasets, total_datasets_size
 
     # for training, concatenate all datasets into a single one
     dataset = datasets[0]
     if len(datasets) > 1:
         dataset = D.ConcatDataset(datasets)
 
-    return [dataset]
+    return [dataset], total_datasets_size
 
 
 def make_data_sampler(dataset, shuffle, distributed):
@@ -76,8 +84,13 @@ def _quantize(x, bins):
 
 def _compute_aspect_ratios(dataset):
     aspect_ratios = []
+    # SSY
+    #print("_compute_aspect_ratios type dataset "+str(type(dataset)))
+    #print("_compute_aspect_ratios dataset "+str(dataset))
     for i in range(len(dataset)):
+        # SSY old one
         img_info = dataset.get_img_info(i)
+        #img_info = dataset[i].get_img_info(i)
         aspect_ratio = float(img_info["height"]) / float(img_info["width"])
         aspect_ratios.append(aspect_ratio)
     return aspect_ratios
@@ -153,7 +166,9 @@ def make_data_loader(cfg, is_train=True, is_distributed=False, start_iter=0, is_
 
     # If bbox aug is enabled in testing, simply set transforms to None and we will apply transforms later
     transforms = None if not is_train and cfg.TEST.BBOX_AUG.ENABLED else build_transforms(cfg, is_train)
-    datasets = build_dataset(dataset_list, transforms, DatasetCatalog, is_train or is_for_period)
+    datasets, epoch_size = build_dataset(dataset_list, transforms, DatasetCatalog, is_train or is_for_period)
+    # SSY
+    #print("SSYSSY "+str(type(datasets)))
 
     if is_train:
         # save category_id to label name mapping
@@ -161,6 +176,8 @@ def make_data_loader(cfg, is_train=True, is_distributed=False, start_iter=0, is_
 
     data_loaders = []
     for dataset in datasets:
+        #print("dataset type SSY "+str(type(dataset)))
+        #print("dataset SSY "+str(dataset))
         sampler = make_data_sampler(dataset, shuffle, is_distributed)
         batch_sampler = make_batch_data_sampler(
             dataset, sampler, aspect_grouping, images_per_gpu, num_iters, start_iter
@@ -178,5 +195,9 @@ def make_data_loader(cfg, is_train=True, is_distributed=False, start_iter=0, is_
     if is_train or is_for_period:
         # during training, a single (possibly concatenated) data_loader is returned
         assert len(data_loaders) == 1
-        return data_loaders[0]
-    return data_loaders
+        # SSY adding 
+        iterations_per_epoch = epoch_size // images_per_batch + 1
+        return data_loaders[0], iterations_per_epoch
+    # SSY
+    print("SSY : eval return data_loaders with intentional list with length "+str(len(data_loaders)))
+    return data_loaders , 0
