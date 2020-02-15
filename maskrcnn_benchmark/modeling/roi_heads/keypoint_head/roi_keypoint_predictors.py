@@ -26,7 +26,7 @@ class KeypointRCNNPredictor(nn.Module):
         self.out_channels = num_keypoints
 
     def forward(self, x):
-        x = self.kps_score_lowres(x)
+        x = bf16cutbp.apply(self.kps_score_lowres(bf16cutfp.apply(x)))
         x = layers.interpolate(
             x, scale_factor=self.up_scale, mode="bilinear", align_corners=False
         )

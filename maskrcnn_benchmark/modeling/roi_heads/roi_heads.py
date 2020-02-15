@@ -63,10 +63,13 @@ def build_roi_heads(cfg, in_channels):
         return []
 
     if not cfg.MODEL.RPN_ONLY:
+        # ~/ssy/ssynew/maskrcnn-benchmark/maskrcnn_benchmark/modeling/roi_heads/box_head/box_head.py
         roi_heads.append(("box", build_roi_box_head(cfg, in_channels)))
     if cfg.MODEL.MASK_ON:
+        # SSY /root/ssy/ssynew/maskrcnn-benchmark/maskrcnn_benchmark/modeling/roi_heads/mask_head/mask_head.py
         roi_heads.append(("mask", build_roi_mask_head(cfg, in_channels)))
     if cfg.MODEL.KEYPOINT_ON:
+        # SSY y/ssynew/maskrcnn-benchmark/maskrcnn_benchmark/modeling/roi_heads/keypoint_head/keypoint_head.py
         roi_heads.append(("keypoint", build_roi_keypoint_head(cfg, in_channels)))
 
     # combine individual heads in a single module

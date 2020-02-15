@@ -29,6 +29,11 @@ from maskrcnn_benchmark.modeling.make_layers import group_norm
 from maskrcnn_benchmark.utils.registry import Registry
 
 
+# SSY
+from maskrcnn_benchmark.modeling.pgrad import *
+
+
+
 # ResNet stage specification
 StageSpec = namedtuple(
     "StageSpec",
@@ -87,11 +92,15 @@ class ResNet(nn.Module):
         # self.cfg = cfg.clone()
 
         # Translate string names to implementations
+        # SSY base cell with conv+BN+relu+pooling
         stem_module = _STEM_MODULES[cfg.MODEL.RESNETS.STEM_FUNC]
+        #  SSY each stage with different number and shape of conv filters
         stage_specs = _STAGE_SPECS[cfg.MODEL.BACKBONE.CONV_BODY]
+        # SSY real stages with both conv3 and conv1, the latter is also named bottle neck layer
         transformation_module = _TRANSFORMATION_MODULES[cfg.MODEL.RESNETS.TRANS_FUNC]
 
         # Construct the stem module
+        # SSY first stage without bottlneck stem all absed on BaseStem
         self.stem = stem_module(cfg)
 
         # Constuct the specified ResNet stages
@@ -255,10 +264,15 @@ class Bottleneck(nn.Module):
         if in_channels != out_channels:
             down_stride = stride if dilation == 1 else 1
             self.downsample = nn.Sequential(
+                # downsample is a composite module called directly in forward, so i need to add bf16cut as module
+                # but in restoring from check point, this may lead to mis matched instance name
+                # so I put it to forwad below
+                #bf16cutfp_mod(), 
                 Conv2d(
                     in_channels, out_channels,
                     kernel_size=1, stride=down_stride, bias=False
                 ),
+                bf16cutbp_mod(),
                 norm_func(out_channels),
             )
             for modules in [self.downsample,]:
@@ -324,18 +338,25 @@ class Bottleneck(nn.Module):
     def forward(self, x):
         identity = x
 
+        x = bf16cutfp.apply(x)
         out = self.conv1(x)
+        out = bf16cutbp.apply(out)
         out = self.bn1(out)
         out = F.relu_(out)
 
+        out = bf16cutfp.apply(out)
         out = self.conv2(out)
+        out = bf16cutbp.apply(out)
         out = self.bn2(out)
         out = F.relu_(out)
 
+        out = bf16cutfp.apply(out)
         out = self.conv3(out)
+        out = bf16cutbp.apply(out)
         out = self.bn3(out)
 
         if self.downsample is not None:
+            x=bf16cutfp.apply(x)
             identity = self.downsample(x)
 
         out += identity
@@ -359,7 +380,11 @@ class BaseStem(nn.Module):
             nn.init.kaiming_uniform_(l.weight, a=1)
 
     def forward(self, x):
+        # SSY adding fp
+        x = bf16cutfp.apply(x)
         x = self.conv1(x)
+        # SSY adding bp
+        x = bf16cutbp.apply(x)
         x = self.bn1(x)
         x = F.relu_(x)
         x = F.max_pool2d(x, kernel_size=3, stride=2, padding=1)

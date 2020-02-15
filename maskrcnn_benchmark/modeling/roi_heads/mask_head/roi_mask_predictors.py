@@ -6,6 +6,8 @@ from maskrcnn_benchmark.layers import Conv2d
 from maskrcnn_benchmark.layers import ConvTranspose2d
 from maskrcnn_benchmark.modeling import registry
 
+from maskrcnn_benchmark.modeling.pgrad import *
+
 
 @registry.ROI_MASK_PREDICTOR.register("MaskRCNNC4Predictor")
 class MaskRCNNC4Predictor(nn.Module):
@@ -27,8 +29,8 @@ class MaskRCNNC4Predictor(nn.Module):
                 nn.init.kaiming_normal_(param, mode="fan_out", nonlinearity="relu")
 
     def forward(self, x):
-        x = F.relu(self.conv5_mask(x))
-        return self.mask_fcn_logits(x)
+        x = F.relu(bf16cutbp.apply(self.conv5_mask(bf16cutfp.apply(x))))
+        return bf16cutbp.apply(self.mask_fcn_logits(bf16cutfp.apply(x)))
 
 
 @registry.ROI_MASK_PREDICTOR.register("MaskRCNNConv1x1Predictor")
@@ -49,7 +51,7 @@ class MaskRCNNConv1x1Predictor(nn.Module):
                 nn.init.kaiming_normal_(param, mode="fan_out", nonlinearity="relu")
 
     def forward(self, x):
-        return self.mask_fcn_logits(x)
+        return bf16cutbp.apply(self.mask_fcn_logits(bf16cutfp.apply(x)))
 
 
 def make_roi_mask_predictor(cfg, in_channels):

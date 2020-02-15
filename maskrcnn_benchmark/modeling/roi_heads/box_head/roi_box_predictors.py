@@ -2,6 +2,8 @@
 from maskrcnn_benchmark.modeling import registry
 from torch import nn
 
+from maskrcnn_benchmark.modeling.pgrad import *
+
 
 @registry.ROI_BOX_PREDICTOR.register("FastRCNNPredictor")
 class FastRCNNPredictor(nn.Module):
@@ -26,8 +28,8 @@ class FastRCNNPredictor(nn.Module):
     def forward(self, x):
         x = self.avgpool(x)
         x = x.view(x.size(0), -1)
-        cls_logit = self.cls_score(x)
-        bbox_pred = self.bbox_pred(x)
+        cls_logit = bf16cutbp.apply(self.cls_score(bf16cutfp.apply(x)))
+        bbox_pred = bf16cutbp.apply(self.bbox_pred(bf16cutfp.apply(x)))
         return cls_logit, bbox_pred
 
 
@@ -51,8 +53,8 @@ class FPNPredictor(nn.Module):
         if x.ndimension() == 4:
             assert list(x.shape[2:]) == [1, 1]
             x = x.view(x.size(0), -1)
-        scores = self.cls_score(x)
-        bbox_deltas = self.bbox_pred(x)
+        scores = bf16cutbp.apply(self.cls_score(bf16cutfp.apply(x)))
+        bbox_deltas = bf16cutbp.apply(self.bbox_pred(bf16cutfp.apply(x)))
 
         return scores, bbox_deltas
 

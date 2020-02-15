@@ -94,6 +94,10 @@ class LastLevelP6P7(nn.Module):
 
     def forward(self, c5, p5):
         x = p5 if self.use_P5 else c5
+        x=bf16cutfp.apply(x)
         p6 = self.p6(x)
+        p6=bf16cutbp.apply(p6)
+        p6=bf16cutfp.apply(p6)
         p7 = self.p7(F.relu(p6))
+        p7=bf16cutbp.apply(p7)
         return [p6, p7]

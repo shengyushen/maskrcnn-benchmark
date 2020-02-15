@@ -25,9 +25,11 @@ class GeneralizedRCNN(nn.Module):
 
     def __init__(self, cfg):
         super(GeneralizedRCNN, self).__init__()
-
+        # /root/ssy/ssynew/maskrcnn-benchmark/maskrcnn_benchmark/modeling/backbone/backbone.py
         self.backbone = build_backbone(cfg)
+        #/root/ssy/ssynew/maskrcnn-benchmark/maskrcnn_benchmark/modeling/rpn/rpn.py
         self.rpn = build_rpn(cfg, self.backbone.out_channels)
+        # ~/ssy/ssynew/maskrcnn-benchmark/maskrcnn_benchmark/modeling/roi_heads/roi_heads.py
         self.roi_heads = build_roi_heads(cfg, self.backbone.out_channels)
 
     def forward(self, images, targets=None):
@@ -48,6 +50,7 @@ class GeneralizedRCNN(nn.Module):
         images = to_image_list(images)
         features = self.backbone(images.tensors)
         proposals, proposal_losses = self.rpn(images, features, targets)
+        #print("SSYSSY proposals "+str(proposals))
         if self.roi_heads:
             x, result, detector_losses = self.roi_heads(features, proposals, targets)
         else:

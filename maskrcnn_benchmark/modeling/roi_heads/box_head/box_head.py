@@ -15,7 +15,9 @@ class ROIBoxHead(torch.nn.Module):
 
     def __init__(self, cfg, in_channels):
         super(ROIBoxHead, self).__init__()
+        # ~/ssy/ssynew/maskrcnn-benchmark/maskrcnn_benchmark/modeling/roi_heads/box_head/roi_box_feature_extractors.py
         self.feature_extractor = make_roi_box_feature_extractor(cfg, in_channels)
+        # /root/ssy/ssynew/maskrcnn-benchmark/maskrcnn_benchmark/modeling/roi_heads/box_head/roi_box_predictors.py
         self.predictor = make_roi_box_predictor(
             cfg, self.feature_extractor.out_channels)
         self.post_processor = make_roi_box_post_processor(cfg)

@@ -8,8 +8,8 @@ from torch import nn
 from torch.nn import functional as F
 from maskrcnn_benchmark.config import cfg
 from maskrcnn_benchmark.layers import Conv2d
-from maskrcnn_benchmark.modeling.poolers import Pooler
 
+from maskrcnn_benchmark.modeling.pgrad import *
 
 def get_group_gn(dim, dim_per_gp, num_groups):
     """get number of groups used by GroupNorm, based on number of channels."""
@@ -67,14 +67,14 @@ def make_conv3x3(
         torch.nn.init.normal_(conv.weight, std=0.01)
     if not use_gn:
         nn.init.constant_(conv.bias, 0)
-    module = [conv,]
+    module = [bf16cutfp_mod(), conv,bf16cutbp_mod()]
     if use_gn:
         module.append(group_norm(out_channels))
     if use_relu:
         module.append(nn.ReLU(inplace=True))
     if len(module) > 1:
         return nn.Sequential(*module)
-    return conv
+    return nn.Sequential([bf16cutfp_mod(), conv,bf16cutbp_mod()])
 
 
 def make_fc(dim_in, hidden_dim, use_gn=False):
@@ -84,12 +84,12 @@ def make_fc(dim_in, hidden_dim, use_gn=False):
     '''
     if use_gn:
         fc = nn.Linear(dim_in, hidden_dim, bias=False)
-        nn.init.kaiming_uniform_(fc.weight, a=1)
-        return nn.Sequential(fc, group_norm(hidden_dim))
+        nn.init.kaiming_uniform_(c.weight, a=1)
+        return nn.Sequential(bf16cutfp_mod(),fc, bf16cutbp_mod(), group_norm(hidden_dim))
     fc = nn.Linear(dim_in, hidden_dim)
     nn.init.kaiming_uniform_(fc.weight, a=1)
     nn.init.constant_(fc.bias, 0)
-    return fc
+    return  nn.Sequential(bf16cutfp_mod(),fc, bf16cutbp_mod())
 
 
 def conv_with_kaiming_uniform(use_gn=False, use_relu=False):
@@ -110,7 +110,7 @@ def conv_with_kaiming_uniform(use_gn=False, use_relu=False):
         nn.init.kaiming_uniform_(conv.weight, a=1)
         if not use_gn:
             nn.init.constant_(conv.bias, 0)
-        module = [conv,]
+        module = [bf16cutfp_mod(),conv,bf16cutbp_mod(),]
         if use_gn:
             module.append(group_norm(out_channels))
         if use_relu:

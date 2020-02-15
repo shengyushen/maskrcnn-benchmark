@@ -39,7 +39,7 @@ class KeypointRCNNFeatureExtractor(nn.Module):
     def forward(self, x, proposals):
         x = self.pooler(x, proposals)
         for layer_name in self.blocks:
-            x = F.relu(getattr(self, layer_name)(x))
+            x = F.relu(bf16cutbp.apply(getattr(self, layer_name)(bf16cutfp.apply(x))))
         return x
 
 

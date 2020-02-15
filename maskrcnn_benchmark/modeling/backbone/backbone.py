@@ -14,6 +14,7 @@ from . import resnet
 @registry.BACKBONES.register("R-101-C4")
 @registry.BACKBONES.register("R-101-C5")
 def build_resnet_backbone(cfg):
+    # SSY ~/ssy/ssynew/maskrcnn-benchmark/maskrcnn_benchmark/modeling/backbone/resnet.py
     body = resnet.ResNet(cfg)
     model = nn.Sequential(OrderedDict([("body", body)]))
     model.out_channels = cfg.MODEL.RESNETS.BACKBONE_OUT_CHANNELS
@@ -27,6 +28,7 @@ def build_resnet_fpn_backbone(cfg):
     body = resnet.ResNet(cfg)
     in_channels_stage2 = cfg.MODEL.RESNETS.RES2_OUT_CHANNELS
     out_channels = cfg.MODEL.RESNETS.BACKBONE_OUT_CHANNELS
+    # SSY ~/ssy/ssynew/maskrcnn-benchmark/maskrcnn_benchmark/modeling/backbone/fpn.py
     fpn = fpn_module.FPN(
         in_channels_list=[
             in_channels_stage2,
@@ -35,6 +37,7 @@ def build_resnet_fpn_backbone(cfg):
             in_channels_stage2 * 8,
         ],
         out_channels=out_channels,
+        # SSY ~/ssy/ssynew/maskrcnn-benchmark/maskrcnn_benchmark/modeling/make_layers.py
         conv_block=conv_with_kaiming_uniform(
             cfg.MODEL.FPN.USE_GN, cfg.MODEL.FPN.USE_RELU
         ),
@@ -64,6 +67,7 @@ def build_resnet_fpn_p3p7_backbone(cfg):
         conv_block=conv_with_kaiming_uniform(
             cfg.MODEL.FPN.USE_GN, cfg.MODEL.FPN.USE_RELU
         ),
+        # SSY ~/ssy/ssynew/maskrcnn-benchmark/maskrcnn_benchmark/modeling/backbone/fpn.py
         top_blocks=fpn_module.LastLevelP6P7(in_channels_p6p7, out_channels),
     )
     model = nn.Sequential(OrderedDict([("body", body), ("fpn", fpn)]))

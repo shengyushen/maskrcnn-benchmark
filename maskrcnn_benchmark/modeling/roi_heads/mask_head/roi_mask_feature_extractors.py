@@ -9,6 +9,7 @@ from maskrcnn_benchmark.modeling.make_layers import make_conv3x3
 
 
 registry.ROI_MASK_FEATURE_EXTRACTORS.register(
+    # SSY /root/ssy/ssynew/maskrcnn-benchmark/maskrcnn_benchmark/modeling/roi_heads/box_head/roi_box_feature_extractors.py
     "ResNet50Conv5ROIFeatureExtractor", ResNet50Conv5ROIFeatureExtractor
 )
 
@@ -47,6 +48,7 @@ class MaskRCNNFPNFeatureExtractor(nn.Module):
         self.blocks = []
         for layer_idx, layer_features in enumerate(layers, 1):
             layer_name = "mask_fcn{}".format(layer_idx)
+            # SSY ~/ssy/ssynew/maskrcnn-benchmark/maskrcnn_benchmark/modeling/make_layers.py
             module = make_conv3x3(
                 next_feature, layer_features,
                 dilation=dilation, stride=1, use_gn=use_gn

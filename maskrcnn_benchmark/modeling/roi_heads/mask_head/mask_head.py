@@ -37,7 +37,9 @@ class ROIMaskHead(torch.nn.Module):
     def __init__(self, cfg, in_channels):
         super(ROIMaskHead, self).__init__()
         self.cfg = cfg.clone()
+        # SSY /root/ssy/ssynew/maskrcnn-benchmark/maskrcnn_benchmark/modeling/roi_heads/mask_head/roi_mask_feature_extractors.py
         self.feature_extractor = make_roi_mask_feature_extractor(cfg, in_channels)
+        # SSY /root/ssy/ssynew/maskrcnn-benchmark/maskrcnn_benchmark/modeling/roi_heads/mask_head/roi_mask_predictors.py
         self.predictor = make_roi_mask_predictor(
             cfg, self.feature_extractor.out_channels)
         self.post_processor = make_roi_mask_post_processor(cfg)

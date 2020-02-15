@@ -10,7 +10,9 @@ class ROIKeypointHead(torch.nn.Module):
     def __init__(self, cfg, in_channels):
         super(ROIKeypointHead, self).__init__()
         self.cfg = cfg.clone()
+        # SSY ~/ssy/ssynew/maskrcnn-benchmark/maskrcnn_benchmark/modeling/roi_heads/keypoint_head/roi_keypoint_feature_extractors.py
         self.feature_extractor = make_roi_keypoint_feature_extractor(cfg, in_channels)
+        # SSY ~/ssy/ssynew/maskrcnn-benchmark/maskrcnn_benchmark/modeling/roi_heads/keypoint_head/roi_keypoint_predictors.py
         self.predictor = make_roi_keypoint_predictor(
             cfg, self.feature_extractor.out_channels)
         self.post_processor = make_roi_keypoint_post_processor(cfg)

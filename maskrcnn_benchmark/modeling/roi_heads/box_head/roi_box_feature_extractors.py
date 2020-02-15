@@ -18,6 +18,7 @@ class ResNet50Conv5ROIFeatureExtractor(nn.Module):
         resolution = config.MODEL.ROI_BOX_HEAD.POOLER_RESOLUTION
         scales = config.MODEL.ROI_BOX_HEAD.POOLER_SCALES
         sampling_ratio = config.MODEL.ROI_BOX_HEAD.POOLER_SAMPLING_RATIO
+        # ~/ssy/ssynew/maskrcnn-benchmark/maskrcnn_benchmark/modeling/poolers.py
         pooler = Pooler(
             output_size=(resolution, resolution),
             scales=scales,
@@ -25,6 +26,7 @@ class ResNet50Conv5ROIFeatureExtractor(nn.Module):
         )
 
         stage = resnet.StageSpec(index=4, block_count=3, return_features=False)
+        # SSY ~/ssy/ssynew/maskrcnn-benchmark/maskrcnn_benchmark/modeling/backbone/resnet.py
         head = resnet.ResNetHead(
             block_module=config.MODEL.RESNETS.TRANS_FUNC,
             stages=(stage,),
@@ -67,6 +69,7 @@ class FPN2MLPFeatureExtractor(nn.Module):
         representation_size = cfg.MODEL.ROI_BOX_HEAD.MLP_HEAD_DIM
         use_gn = cfg.MODEL.ROI_BOX_HEAD.USE_GN
         self.pooler = pooler
+        # SSY ~/ssy/ssynew/maskrcnn-benchmark/maskrcnn_benchmark/modeling/make_layers.py
         self.fc6 = make_fc(input_size, representation_size, use_gn)
         self.fc7 = make_fc(representation_size, representation_size, use_gn)
         self.out_channels = representation_size
@@ -107,6 +110,7 @@ class FPNXconv1fcFeatureExtractor(nn.Module):
 
         xconvs = []
         for ix in range(num_stacked_convs):
+            xconvs.append(bf16cutfp_mod)
             xconvs.append(
                 nn.Conv2d(
                     in_channels,
@@ -118,6 +122,7 @@ class FPNXconv1fcFeatureExtractor(nn.Module):
                     bias=False if use_gn else True
                 )
             )
+            xconvs.append(bf16cutbp_mod)
             in_channels = conv_head_dim
             if use_gn:
                 xconvs.append(group_norm(in_channels))
